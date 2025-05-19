@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"github.com/Tomy2e/cluster-api-provider-scaleway/internal"
 	"github.com/Tomy2e/cluster-api-provider-scaleway/internal/scope"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
+	"path/filepath"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -46,12 +48,17 @@ func (a *App) clusterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
-
+	kubeconfigPath := filepath.Join("kubeconfig-AMMI-CAAPH.yaml")
+	err := internal.GenerateClusterConfigFromMemory(context.TODO(), cluster.Name, cluster.ControlplaneMachineCount, cluster.WorkerMachineCount, kubeconfigPath)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to generate cluster config: %v", err), http.StatusInternalServerError)
+		return
+	}
 	response := map[string]string{"status": "success",
 		"message":                  "Cluster received",
 		"name":                     cluster.Name,
-		"controlplaneMachineCount": strconv.Itoa(cluster.ControlplaneMachineCount),
-		"workerMachineCount":       strconv.Itoa(cluster.WorkerMachineCount)}
+		"controlplaneMachineCount": fmt.Sprintf("%v", cluster.ControlplaneMachineCount),
+		"workerMachineCount":       fmt.Sprintf("%v", cluster.WorkerMachineCount)}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
