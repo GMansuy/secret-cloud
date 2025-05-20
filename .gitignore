@@ -4,3 +4,4 @@ my-test-cluster-cluster.yaml
 my-cluster.yaml
 .envrc
 refacto-cluster.yaml
+kind-kubeconfig.yml

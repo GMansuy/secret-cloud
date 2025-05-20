@@ -17,7 +17,9 @@ func main() {
 	var templateOptions client.GetClusterTemplateOptions
 	if os.Args[1] == "--local" {
 		templateOptions = client.GetClusterTemplateOptions{
-			ProviderRepositorySource: &client.ProviderRepositorySourceOptions{InfrastructureProvider: "docker"},
+			ProviderRepositorySource: &client.ProviderRepositorySourceOptions{
+				InfrastructureProvider: "docker",
+				Flavor:                 "development"},
 		}
 	} else {
 		templateOptions = client.GetClusterTemplateOptions{
