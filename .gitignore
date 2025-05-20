@@ -2,3 +2,5 @@
 kubeconfig-AMMI-CAAPH.yaml
 my-test-cluster-cluster.yaml
 my-cluster.yaml
+.envrc
+refacto-cluster.yaml

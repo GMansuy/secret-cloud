@@ -2,69 +2,17 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"github.com/Tomy2e/cluster-api-provider-scaleway/internal"
-	"github.com/Tomy2e/cluster-api-provider-scaleway/internal/scope"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/Tomy2e/cluster-api-provider-scaleway/api"
 )
 
-type App struct {
-	Router *chi.Mux
-}
-
-func NewApp() *App {
-	app := &App{
-		Router: chi.NewRouter(),
-	}
-	app.setupRoutes()
-	return app
-}
-
-func (a *App) setupRoutes() {
-	a.Router.Use(middleware.Logger)
-	a.Router.Use(middleware.Recoverer)
-
-	a.Router.Get("/", a.homeHandler)
-	a.Router.Post("/cluster", a.clusterHandler)
-}
-
-func (a *App) homeHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Welcome to the Clusterapi server HTTP server!"))
-}
-
-func (a *App) clusterHandler(w http.ResponseWriter, r *http.Request) {
-	var cluster scope.Cluster
-	if err := json.NewDecoder(r.Body).Decode(&cluster); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
-		return
-	}
-	defer r.Body.Close()
-	kubeconfigPath := filepath.Join("kubeconfig-AMMI-CAAPH.yaml")
-	err := internal.GenerateClusterConfigFromMemory(context.TODO(), cluster.Name, cluster.ControlplaneMachineCount, cluster.WorkerMachineCount, kubeconfigPath)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to generate cluster config: %v", err), http.StatusInternalServerError)
-		return
-	}
-	response := map[string]string{"status": "success",
-		"message":                  "Cluster received",
-		"name":                     cluster.Name,
-		"controlplaneMachineCount": fmt.Sprintf("%v", cluster.ControlplaneMachineCount),
-		"workerMachineCount":       fmt.Sprintf("%v", cluster.WorkerMachineCount)}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
 func main() {
-	app := NewApp()
+	app := api.NewApp()
 
 	server := &http.Server{
 		Addr:    ":8080",
