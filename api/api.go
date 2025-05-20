@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/Tomy2e/cluster-api-provider-scaleway/internal"
 	"github.com/Tomy2e/cluster-api-provider-scaleway/internal/scope"
@@ -14,14 +13,14 @@ import (
 )
 
 type App struct {
-	Router                   *chi.Mux
-	ManagementKubeconfigPath string
+	Router     *chi.Mux
+	ClusterSvc *internal.ClusterService
 }
 
-func NewApp() *App {
+func NewApp(c *internal.ClusterService) *App {
 	app := &App{
-		Router:                   chi.NewRouter(),
-		ManagementKubeconfigPath: os.Getenv("KUBECONFIG"),
+		Router:     chi.NewRouter(),
+		ClusterSvc: c,
 	}
 	app.setupRoutes()
 	return app
@@ -48,7 +47,9 @@ func (a *App) createClusterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	err := internal.CreateCluster(context.Background(), cluster.Name, cluster.ControlplaneMachineCount, cluster.WorkerMachineCount, a.ManagementKubeconfigPath)
+	opts := a.ClusterSvc.SetCreationTemplateOptions(&cluster)
+
+	err := a.ClusterSvc.CreateCluster(context.Background(), cluster.Name, opts)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to generate cluster config: %v", err), http.StatusInternalServerError)
 		return
@@ -71,7 +72,7 @@ func (a *App) deleteClusterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	err := internal.DeleteCluster(context.Background(), cluster.Name, a.ManagementKubeconfigPath)
+	err := a.ClusterSvc.DeleteCluster(context.Background(), cluster.Name)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to generate cluster config: %v", err), http.StatusInternalServerError)
 		return

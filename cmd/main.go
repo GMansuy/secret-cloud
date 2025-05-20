@@ -9,11 +9,26 @@ import (
 	"time"
 
 	"github.com/Tomy2e/cluster-api-provider-scaleway/api"
+	"github.com/Tomy2e/cluster-api-provider-scaleway/internal"
+	"sigs.k8s.io/cluster-api/cmd/clusterctl/client"
 )
 
 func main() {
-	app := api.NewApp()
+	var templateOptions client.GetClusterTemplateOptions
+	if os.Args[1] == "--local" {
+		templateOptions = client.GetClusterTemplateOptions{
+			ProviderRepositorySource: &client.ProviderRepositorySourceOptions{InfrastructureProvider: "docker"},
+		}
+	} else {
+		templateOptions = client.GetClusterTemplateOptions{
+			URLSource: &client.URLSourceOptions{
+				URL: "https://github.com/Tomy2e/cluster-api-provider-scaleway/releases/download/v0.0.3/cluster-template.yaml",
+			},
+		}
+	}
 
+	clusterSvc := internal.NewClusterService(os.Getenv("KUBECONFIG"), templateOptions)
+	app := api.NewApp(clusterSvc)
 	server := &http.Server{
 		Addr:    ":8080",
 		Handler: app.Router,
