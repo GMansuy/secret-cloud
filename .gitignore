@@ -1,7 +1,7 @@
 .idea/
-kubeconfig-AMMI-CAAPH.yaml
-my-test-cluster-cluster.yaml
+var/kubeconfig-AMMI-CAAPH.yaml
+var/my-test-cluster-cluster.yaml
 my-cluster.yaml
 .envrc
 refacto-cluster.yaml
-kind-kubeconfig.yml
+var/kind-kubeconfig.yml

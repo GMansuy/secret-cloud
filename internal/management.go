@@ -47,7 +47,7 @@ func (c *ClusterService) CreateCluster(ctx context.Context, clusterName string, 
 	cmd := exec.Command("kubectl", "apply", "-f", fmt.Sprintf("%s-cluster.yaml", clusterName))
 	_, err = cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to apply cluster configuration to file: %w", err)
 	}
 	slog.InfoContext(ctx, "Creating Cluster", slog.String("clusterName", clusterName))
 	return nil

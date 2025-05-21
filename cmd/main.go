@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -16,10 +17,25 @@ import (
 func main() {
 	var templateOptions client.GetClusterTemplateOptions
 	if os.Args[1] == "--local" {
+		c, err := client.New(context.Background(), "")
+		if err != nil {
+			log.Fatalf("failed to create clusterctl client: %v", err)
+		}
+		initOptions := client.InitOptions{
+			CoreProvider:            "cluster-api",
+			BootstrapProviders:      []string{"kubeadm"},
+			ControlPlaneProviders:   []string{"kubeadm"},
+			InfrastructureProviders: []string{"docker:v1.10.1"},
+		}
+		if _, err = c.Init(context.Background(), initOptions); err != nil {
+			log.Fatalf("Failed to initialize providers: %v", err)
+		}
+		fmt.Println("✅ Providers initialized.")
 		templateOptions = client.GetClusterTemplateOptions{
 			ProviderRepositorySource: &client.ProviderRepositorySourceOptions{
 				InfrastructureProvider: "docker",
-				Flavor:                 "development"},
+				Flavor:                 "development",
+			},
 		}
 	} else {
 		templateOptions = client.GetClusterTemplateOptions{
