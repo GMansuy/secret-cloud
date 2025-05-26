@@ -44,7 +44,7 @@ func (c *ClusterService) CreateCluster(ctx context.Context, clusterName string, 
 		return fmt.Errorf("failed to write cluster configuration to file: %w", err)
 	}
 
-	cmd := exec.Command("kubectl", "apply", "-f", fmt.Sprintf("%s-cluster.yaml", clusterName))
+	cmd := exec.Command("kubectl", "apply", fmt.Sprintf("--kubeconfig=%s", opts.Kubeconfig.Path), "-f", fmt.Sprintf("%s-cluster.yaml", clusterName))
 	_, err = cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to apply cluster configuration to file: %w", err)
