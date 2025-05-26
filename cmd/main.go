@@ -16,7 +16,7 @@ import (
 
 func main() {
 	var templateOptions client.GetClusterTemplateOptions
-	if os.Args[1] == "--local" {
+	if len(os.Args) > 1 && os.Args[1] == "--local" {
 		c, err := client.New(context.Background(), "")
 		if err != nil {
 			log.Fatalf("failed to create clusterctl client: %v", err)
