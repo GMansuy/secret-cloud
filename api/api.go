@@ -29,6 +29,18 @@ func NewApp(c *internal.ClusterService) *App {
 func (a *App) setupRoutes() {
 	a.Router.Use(middleware.Logger)
 	a.Router.Use(middleware.Recoverer)
+	a.Router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	})
 
 	a.Router.Get("/", a.homeHandler)
 	a.Router.Post("/cluster", a.createClusterHandler)
@@ -60,7 +72,6 @@ func (a *App) createClusterHandler(w http.ResponseWriter, r *http.Request) {
 		"name":                     cluster.Name,
 		"controlplaneMachineCount": fmt.Sprintf("%v", cluster.ControlplaneMachineCount),
 		"workerMachineCount":       fmt.Sprintf("%v", cluster.WorkerMachineCount)}
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -82,6 +93,5 @@ func (a *App) deleteClusterHandler(w http.ResponseWriter, r *http.Request) {
 		"message": "Cluster deleting",
 		"name":    cluster.Name,
 	}
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
