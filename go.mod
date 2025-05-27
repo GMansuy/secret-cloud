@@ -3,8 +3,11 @@ module github.com/Tomy2e/cluster-api-provider-scaleway
 go 1.22.0
 
 require (
+	github.com/MicahParks/keyfunc v1.9.0
 	github.com/go-chi/chi v1.5.5
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/stretchr/testify v1.8.4
+	golang.org/x/oauth2 v0.18.0
 	sigs.k8s.io/cluster-api v1.7.0
 )
 
@@ -34,6 +37,7 @@ require (
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/gobuffalo/flect v1.0.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/cel-go v0.17.7 // indirect
@@ -81,7 +85,6 @@ require (
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f // indirect
 	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/oauth2 v0.18.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/term v0.19.0 // indirect
