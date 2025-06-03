@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os/exec"
 
 	"github.com/Tomy2e/cluster-api-provider-scaleway/internal"
 	"github.com/Tomy2e/cluster-api-provider-scaleway/internal/scope"
@@ -45,6 +46,8 @@ func (a *App) setupRoutes() {
 	a.Router.Get("/", a.homeHandler)
 	a.Router.Post("/cluster", a.createClusterHandler)
 	a.Router.Delete("/cluster", a.deleteClusterHandler)
+	a.Router.Get("/list", a.listClusters)
+	a.Router.Get("/cluster", a.getCluster)
 }
 
 func (a *App) homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -92,6 +95,40 @@ func (a *App) deleteClusterHandler(w http.ResponseWriter, r *http.Request) {
 	response := map[string]string{"status": "success",
 		"message": "Cluster deleting",
 		"name":    cluster.Name,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+func (a *App) listClusters(w http.ResponseWriter, r *http.Request) {
+
+	cmd := exec.Command("kubectl", "get", "cluster", `-o=jsonpath='{range .items[*]}{.metadata.name}{.status.conditions}{end}`)
+	ouput, err := cmd.CombinedOutput()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to list clusters: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]string{
+		"status":   "success",
+		"clusters": string(ouput),
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+func (a *App) getCluster(w http.ResponseWriter, r *http.Request) {
+
+	clusterName := "mang2"
+
+	cmd := exec.Command("kubectl", "get", "cluster", clusterName, `-o=jsonpath={.status.conditions}`)
+	ouput, err := cmd.CombinedOutput()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to list clusters: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]string{
+		"name":   clusterName,
+		"status": string(ouput),
 	}
 	json.NewEncoder(w).Encode(response)
 }
