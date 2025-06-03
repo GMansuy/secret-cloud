@@ -32,6 +32,7 @@ export default function Cluster() {
             setError("Failed to create cluster.");
             console.error(err);
         }
+        window.location.href = "/clusterlist"; // Redirect to the cluster list page after successful login
     };
 
     return (

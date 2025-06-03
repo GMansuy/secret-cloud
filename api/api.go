@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os/exec"
 
+	b64 "encoding/base64"
 	"github.com/Tomy2e/cluster-api-provider-scaleway/internal"
 	"github.com/Tomy2e/cluster-api-provider-scaleway/internal/scope"
 	"github.com/go-chi/chi"
@@ -48,6 +49,7 @@ func (a *App) setupRoutes() {
 	a.Router.Delete("/cluster", a.deleteClusterHandler)
 	a.Router.Get("/list", a.listClusters)
 	a.Router.Get("/cluster", a.getCluster)
+	a.Router.Get("/cluster/{name}/kubeconfig", a.getClusterKubeconfigHandler)
 }
 
 func (a *App) homeHandler(w http.ResponseWriter, r *http.Request) {
@@ -130,5 +132,34 @@ func (a *App) getCluster(w http.ResponseWriter, r *http.Request) {
 		"name":   clusterName,
 		"status": string(ouput),
 	}
+	json.NewEncoder(w).Encode(response)
+}
+
+func (a *App) getClusterKubeconfigHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract the name parameter from the URL
+	clusterName := chi.URLParam(r, "name")
+
+	if clusterName == "" {
+		http.Error(w, "Cluster name is required", http.StatusBadRequest)
+		return
+	}
+
+	// Use the extracted cluster name to get the kubeconfig
+
+	cmd := exec.Command("kubectl", "get", "secret", fmt.Sprintf("%s-kubeconfig", clusterName), "-o", "jsonpath={.data.value}")
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to get kubeconfig: %v", err), http.StatusInternalServerError)
+		return
+	}
+	sDec, _ := b64.StdEncoding.DecodeString(string(output))
+
+	response := map[string]string{
+		"name":       clusterName,
+		"kubeconfig": string(sDec),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }

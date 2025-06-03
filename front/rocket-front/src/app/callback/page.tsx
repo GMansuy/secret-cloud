@@ -8,7 +8,7 @@ export default function Callback() {
         userManager.signinRedirectCallback()
             .then((user) => {
                 localStorage.setItem("access_token", user.access_token);
-                window.location.href = "/cluster";
+                window.location.href = "/clusterlist"; // Redirect to the cluster list page after successful login
             })
             .catch((err) => {
                 console.error("Login failed:", err);
