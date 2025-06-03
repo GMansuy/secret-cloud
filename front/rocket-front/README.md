@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rocket-Front
+
+A modern web application for creating and managing Kubernetes clusters with Microsoft OAuth authentication.
+
+## Overview
+
+Rocket-Front is a Next.js web application built with TypeScript and React that provides a user interface for creating and managing Kubernetes clusters. The application features Microsoft OAuth authentication and communicates with a backend API for cluster operations.
+
+## Features
+
+- **Secure Authentication**: Microsoft Azure AD integration
+- **Cluster Management**: Create and configure Kubernetes clusters
+- **User-Friendly Interface**: Simple form-based cluster creation
+- **Responsive Design**: Works on various device sizes
+
+## Application Structure
+```markdown
+
+
+src/app/
+├── auth-config.tsx       # Authentication configuration with Microsoft OAuth
+├── page.tsx              # Root page (redirects to login)
+├── login/
+│   └── page.tsx          # Microsoft login page
+├── callback/
+│   └── page.tsx          # OAuth callback handler
+└── cluster/
+└── page.tsx          # Cluster creation interface
+```
+
+## Authentication Flow
+
+1. User accesses the application and is redirected to the login page
+2. User clicks "Login" to authenticate with Microsoft
+3. After successful authentication, the callback page:
+   - Processes the authentication response
+   - Stores the access token in localStorage
+   - Redirects to the cluster page
+
+## Cluster Management
+
+The application allows users to create Kubernetes clusters with customizable parameters:
+- Cluster name
+- Control plane machine count
+- Worker machine count
+
+## API Integration
+
+The application communicates with a backend API at `http://localhost:8080`:
+
+```
+POST /cluster
+{
+"name": "my-cluster",
+"controlplaneMachineCount": 1,
+"workerMachineCount": 2
+}
+```
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js (v16+)
+- npm or yarn
+- Azure AD application configured for authentication
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd rocket-front
+
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Configuration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Authentication settings are configured in `src/app/auth-config.tsx`:
+- `authority`: Microsoft identity platform URL
+- `client_id`: Azure AD application ID
+- `redirect_uri`: Callback URL after authentication
+- `scope`: Required OAuth scopes
 
-## Learn More
+## Troubleshooting
 
-To learn more about Next.js, take a look at the following resources:
+### Common Issues
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Authentication Errors**: Verify Azure AD configuration in `auth-config.tsx`
+- **API Connection Errors**: Ensure backend API is running at `http://localhost:8080`
+- **404 Errors**: Check that all required Next.js pages are properly defined
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Technologies
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js](https://nextjs.org/)
+- [React](https://reactjs.org/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [oidc-client-ts](https://github.com/authts/oidc-client-ts) for authentication
+```
