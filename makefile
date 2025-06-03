@@ -20,13 +20,13 @@ cluster:
 # Load the kubeconfig environment variable
 .PHONY: load-env
 load-env:
-	@echo "Setting KUBECONFIG environment variable..."
-	@echo "export KUBECONFIG=$(KUBECONFIG_PATH)"
+	@echo "Setting SCW environment variable..."
+	direnv allow .
 
 # Run the application with KUBECONFIG set
 .PHONY: run
-run: cluster
-	KUBECONFIG=$(KUBECONFIG_PATH) go run cmd/main.go
+run:load-env
+	go run cmd/main.go
 
 # Initialize CAPI providers
 .PHONY: init-providers

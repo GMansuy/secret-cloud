@@ -1,0 +1,290 @@
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: test-cluster-md-0
+  namespace: default
+spec:
+  template:
+    spec:
+      files:
+      - content: |
+          net.ipv4.conf.lxc*.rp_filter = 0
+        owner: root:root
+        path: /etc/sysctl.d/99-cilium.conf
+        permissions: "0744"
+      - content: |
+          overlay
+          br_netfilter
+        owner: root:root
+        path: /etc/modules-load.d/crio.conf
+        permissions: "0744"
+      - content: |
+          net.bridge.bridge-nf-call-iptables  = 1
+          net.bridge.bridge-nf-call-ip6tables = 1
+          net.ipv4.ip_forward                 = 1
+        owner: root:root
+        path: /etc/sysctl.d/99-kubernetes-cri.conf
+        permissions: "0744"
+      - content: |
+          vm.overcommit_memory=1
+          kernel.panic=10
+          kernel.panic_on_oops=1
+        owner: root:root
+        path: /etc/sysctl.d/99-kubelet.conf
+        permissions: "0744"
+      - content: |
+          nameserver 1.1.1.1
+          nameserver 1.0.0.1
+          nameserver 2606:4700:4700::1111
+        owner: root:root
+        path: /etc/kubernetes/resolv.conf
+        permissions: "0744"
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-ip: '[[[ .NodeIP ]]]'
+            provider-id: scaleway://instance/{{ ds.meta_data.zone }}/{{ ds.meta_data.id
+              }}
+            resolv-conf: /etc/kubernetes/resolv.conf
+      preKubeadmCommands:
+      - set -x
+      - grep VERSION= /etc/os-release; uname -a
+      - export CONTAINERD=1.7.14
+      - export KUBERNETES_VERSION=$(echo 1.32.2 | sed 's/^v//')
+      - export TRIMMED_KUBERNETES_VERSION=$(echo 1.32.2 | sed 's/^v//' | awk -F .
+        '{print $1 "." $2}')
+      - ARCH=amd64
+      - if [ "$(uname -m)" = "aarch64" ]; then ARCH=arm64; fi
+      - localectl set-locale LANG=en_US.UTF-8
+      - localectl set-locale LANGUAGE=en_US.UTF-8
+      - apt-get update -y
+      - apt-get -y install at jq unzip wget socat mtr logrotate apt-transport-https
+      - sed -i '/swap/d' /etc/fstab
+      - swapoff -a
+      - modprobe overlay && modprobe br_netfilter && sysctl --system
+      - wget https://github.com/containerd/containerd/releases/download/v$CONTAINERD/cri-containerd-cni-$CONTAINERD-linux-$ARCH.tar.gz
+      - wget https://github.com/containerd/containerd/releases/download/v$CONTAINERD/cri-containerd-cni-$CONTAINERD-linux-$ARCH.tar.gz.sha256sum
+      - sha256sum --check cri-containerd-cni-$CONTAINERD-linux-$ARCH.tar.gz.sha256sum
+      - tar --no-overwrite-dir -C / -xzf cri-containerd-cni-$CONTAINERD-linux-$ARCH.tar.gz
+      - rm -f cri-containerd-cni-$CONTAINERD-linux-$ARCH.tar.gz cri-containerd-cni-$CONTAINERD-linux-$ARCH.tar.gz.sha256sum
+      - chmod -R 644 /etc/cni && chown -R root:root /etc/cni
+      - mkdir -p /etc/containerd
+      - containerd config default > /etc/containerd/config.toml
+      - sed -i  "s/SystemdCgroup = false/SystemdCgroup = true/" /etc/containerd/config.toml
+      - systemctl daemon-reload && systemctl enable containerd && systemctl start
+        containerd
+      - mkdir -p /etc/apt/keyrings/
+      - curl -fsSL https://pkgs.k8s.io/core:/stable:/v$TRIMMED_KUBERNETES_VERSION/deb/Release.key
+        | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      - echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v$TRIMMED_KUBERNETES_VERSION/deb/
+        /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+      - apt-get update
+      - apt-get install -y kubelet=$KUBERNETES_VERSION-1.1 kubeadm=$KUBERNETES_VERSION-1.1
+        kubectl=$KUBERNETES_VERSION-1.1  bash-completion && apt-mark hold kubelet
+        kubectl kubeadm && systemctl enable kubelet
+      - kubeadm config images pull --kubernetes-version $KUBERNETES_VERSION
+      - echo 'source <(kubectl completion bash)' >>/root/.bashrc
+      - echo 'export KUBECONFIG=/etc/kubernetes/admin.conf' >>/root/.bashrc
+      - apt-get -y autoremove && apt-get -y clean all
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: test-cluster
+  namespace: default
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 10.244.0.0/16
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: test-cluster-control-plane
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: ScalewayCluster
+    name: test-cluster
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  labels:
+    nodepool: test-cluster-md-0
+  name: test-cluster-md-0
+  namespace: default
+spec:
+  clusterName: test-cluster
+  replicas: 1
+  selector:
+    matchLabels: null
+  template:
+    metadata:
+      labels:
+        nodepool: test-cluster-md-0
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: test-cluster-md-0
+      clusterName: test-cluster
+      failureDomain: fr-par-1
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: ScalewayMachineTemplate
+        name: test-cluster-md-0
+      version: 1.32.2
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: test-cluster-control-plane
+  namespace: default
+spec:
+  kubeadmConfigSpec:
+    files:
+    - content: |
+        net.ipv4.conf.lxc*.rp_filter = 0
+      owner: root:root
+      path: /etc/sysctl.d/99-cilium.conf
+      permissions: "0744"
+    - content: |
+        overlay
+        br_netfilter
+      owner: root:root
+      path: /etc/modules-load.d/crio.conf
+      permissions: "0744"
+    - content: |
+        net.bridge.bridge-nf-call-iptables  = 1
+        net.bridge.bridge-nf-call-ip6tables = 1
+        net.ipv4.ip_forward                 = 1
+      owner: root:root
+      path: /etc/sysctl.d/99-kubernetes-cri.conf
+      permissions: "0744"
+    - content: |
+        vm.overcommit_memory=1
+        kernel.panic=10
+        kernel.panic_on_oops=1
+      owner: root:root
+      path: /etc/sysctl.d/99-kubelet.conf
+      permissions: "0744"
+    - content: |
+        nameserver 1.1.1.1
+        nameserver 1.0.0.1
+        nameserver 2606:4700:4700::1111
+      owner: root:root
+      path: /etc/kubernetes/resolv.conf
+      permissions: "0744"
+    initConfiguration:
+      localAPIEndpoint:
+        advertiseAddress: '[[[ .NodeIP ]]]'
+      nodeRegistration:
+        kubeletExtraArgs:
+          node-ip: '[[[ .NodeIP ]]]'
+          provider-id: scaleway://instance/{{ ds.meta_data.zone }}/{{ ds.meta_data.id
+            }}
+          resolv-conf: /etc/kubernetes/resolv.conf
+    joinConfiguration:
+      controlPlane:
+        localAPIEndpoint:
+          advertiseAddress: '[[[ .NodeIP ]]]'
+      nodeRegistration:
+        kubeletExtraArgs:
+          node-ip: '[[[ .NodeIP ]]]'
+          provider-id: scaleway://instance/{{ ds.meta_data.zone }}/{{ ds.meta_data.id
+            }}
+          resolv-conf: /etc/kubernetes/resolv.conf
+    preKubeadmCommands:
+    - set -x
+    - export CONTAINERD=1.7.14
+    - export KUBERNETES_VERSION=$(echo 1.32.2 | sed 's/^v//')
+    - export TRIMMED_KUBERNETES_VERSION=$(echo 1.32.2 | sed 's/^v//' | awk -F . '{print
+      $1 "." $2}')
+    - ARCH=amd64
+    - if [ "$(uname -m)" = "aarch64" ]; then ARCH=arm64; fi
+    - localectl set-locale LANG=en_US.UTF-8
+    - localectl set-locale LANGUAGE=en_US.UTF-8
+    - apt-get update -y
+    - apt-get -y install at jq unzip wget socat mtr logrotate apt-transport-https
+    - sed -i '/swap/d' /etc/fstab
+    - swapoff -a
+    - modprobe overlay && modprobe br_netfilter && sysctl --system
+    - wget https://github.com/containerd/containerd/releases/download/v$CONTAINERD/cri-containerd-cni-$CONTAINERD-linux-$ARCH.tar.gz
+    - wget https://github.com/containerd/containerd/releases/download/v$CONTAINERD/cri-containerd-cni-$CONTAINERD-linux-$ARCH.tar.gz.sha256sum
+    - sha256sum --check cri-containerd-cni-$CONTAINERD-linux-$ARCH.tar.gz.sha256sum
+    - tar --no-overwrite-dir -C / -xzf cri-containerd-cni-$CONTAINERD-linux-$ARCH.tar.gz
+    - rm -f cri-containerd-cni-$CONTAINERD-linux-$ARCH.tar.gz cri-containerd-cni-$CONTAINERD-linux-$ARCH.tar.gz.sha256sum
+    - chmod -R 644 /etc/cni && chown -R root:root /etc/cni
+    - mkdir -p /etc/containerd
+    - containerd config default > /etc/containerd/config.toml
+    - sed -i  "s/SystemdCgroup = false/SystemdCgroup = true/" /etc/containerd/config.toml
+    - systemctl daemon-reload && systemctl enable containerd && systemctl start containerd
+    - mkdir -p /etc/apt/keyrings/
+    - curl -fsSL https://pkgs.k8s.io/core:/stable:/v$TRIMMED_KUBERNETES_VERSION/deb/Release.key
+      | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    - echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v$TRIMMED_KUBERNETES_VERSION/deb/
+      /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+    - apt-get update
+    - apt-get install -y kubelet=$KUBERNETES_VERSION-1.1 kubeadm=$KUBERNETES_VERSION-1.1
+      kubectl=$KUBERNETES_VERSION-1.1  bash-completion && apt-mark hold kubelet kubectl
+      kubeadm && systemctl enable kubelet
+    - kubeadm config images pull --kubernetes-version $KUBERNETES_VERSION
+    - echo 'source <(kubectl completion bash)' >>/root/.bashrc
+    - echo 'export KUBECONFIG=/etc/kubernetes/admin.conf' >>/root/.bashrc
+    - apt-get -y autoremove && apt-get -y clean all
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: ScalewayMachineTemplate
+      name: test-cluster-control-plane
+  replicas: 1
+  version: 1.32.2
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: ScalewayMachineTemplate
+metadata:
+  name: test-cluster-control-plane
+  namespace: default
+spec:
+  template:
+    spec:
+      image: ubuntu_jammy
+      publicIP: true
+      rootVolumeSize: 40
+      rootVolumeType: local
+      type: DEV1-L
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: ScalewayMachineTemplate
+metadata:
+  name: test-cluster-md-0
+  namespace: default
+spec:
+  template:
+    spec:
+      image: ubuntu_jammy
+      publicIP: true
+      rootVolumeSize: 40
+      rootVolumeType: local
+      type: DEV1-L
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: ScalewayCluster
+metadata:
+  name: test-cluster
+  namespace: default
+spec:
+  region: fr-par
+  scalewaySecretName: test-cluster
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: test-cluster
+  namespace: default
+stringData:
+  accessKey: SCWHKMAAGT186NKJDEA5
+  projectID: f4b6faa9-0dce-4b18-8f99-824118e7d857
+  secretKey: ec27e8bd-cecb-4eb9-b079-110ed4a1bac9
+type: Opaque
