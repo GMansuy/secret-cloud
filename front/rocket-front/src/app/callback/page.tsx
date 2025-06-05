@@ -1,20 +1,23 @@
 "use client";
 
 import { useEffect } from "react";
-import userManager from "@/app/auth-config";
+import getUserManager from "@/app/auth-config";
+import { useRouter } from 'next/navigation';
 
 export default function Callback() {
+    const router = useRouter();
     useEffect(() => {
+        const userManager = getUserManager();
         userManager.signinRedirectCallback()
             .then((user) => {
                 localStorage.setItem("access_token", user.access_token);
-                window.location.href = "/clusterlist"; // Redirect to the cluster list page after successful login
+                router.push("/clusterlist");
             })
             .catch((err) => {
                 console.error("Login failed:", err);
                 document.body.innerHTML = "Login failed. "+ err.message;
             });
-    }, []);
+    }, [router]);
 
     return (
         <main

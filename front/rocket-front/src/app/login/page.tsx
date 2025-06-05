@@ -1,15 +1,16 @@
 "use client";
 
-import userManager from "@/app/auth-config";
+import getUserManager from "@/app/auth-config";
 
 export default function Login() {
-    const handleLogin = async () => {
-        try {
-            await userManager.signinRedirect();
-        } catch (error) {
-            console.error("Login failed:", error);
-        }
-    };
+        const handleLogin = async () => {
+            try {
+                const userManager = getUserManager();
+                await userManager.signinRedirect();
+            } catch (error) {
+                console.error("Login failed:", error);
+            }
+        };
 
     return (
         <main

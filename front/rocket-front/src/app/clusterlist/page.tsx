@@ -9,6 +9,12 @@ interface ClusterData {
     status: string;
 }
 
+interface clusterStatus {
+    type: string;
+    status: string;
+    reason?: string;
+}
+
 export default function ClustersList() {
     const [clusters, setClusters] = useState<ClusterData[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -59,11 +65,11 @@ export default function ClustersList() {
 
                     // Find specific conditions
                     const controlPlaneReady = conditions.find(
-                        (c: any) => c.type === "ControlPlaneReady"
+                        (c: clusterStatus) => c.type === "ControlPlaneReady"
                     );
 
                     const infrastructureReady = conditions.find(
-                        (c: any) => c.type === "InfrastructureReady"
+                        (c: clusterStatus) => c.type === "InfrastructureReady"
                     );
 
                     // Generate status text based on conditions

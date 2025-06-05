@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 export default function Cluster() {
     const [data, setData] = useState<string>("");
@@ -11,6 +12,7 @@ export default function Cluster() {
         controlplaneMachineCount: 1,
         workerMachineCount: 2,
     });
+    const router = useRouter();
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -32,7 +34,7 @@ export default function Cluster() {
             setError("Failed to create cluster.");
             console.error(err);
         }
-        window.location.href = "/clusterlist"; // Redirect to the cluster list page after successful login
+        router.push("/clusterlist"); // Redirect to the cluster list page after successful login
     };
 
     return (
