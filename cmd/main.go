@@ -45,7 +45,9 @@ func main() {
 		}
 	}
 
-	clusterSvc := internal.NewClusterService(os.Getenv("KUBECONFIG"), templateOptions)
+	kubeconfigPath := internal.GetKubeconfig()
+	log.Printf("Using kubeconfig: %s", kubeconfigPath)
+	clusterSvc := internal.NewClusterService(kubeconfigPath, templateOptions)
 	app := api.NewApp(clusterSvc)
 	server := &http.Server{
 		Addr:    ":8080",

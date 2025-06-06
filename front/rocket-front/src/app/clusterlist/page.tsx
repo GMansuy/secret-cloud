@@ -3,6 +3,18 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Link from "next/link";
+import Alert from "@mui/material/Alert";
+import {
+    Button,
+    CircularProgress,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow
+} from "@mui/material";
+import { saveAs } from 'file-saver';
 
 interface ClusterData {
     name: string;
@@ -130,22 +142,7 @@ export default function ClustersList() {
             // Create a blob with the kubeconfig content
             const blob = new Blob([response.data.kubeconfig], { type: 'text/yaml' });
 
-            // Create a URL for the blob
-            const url = window.URL.createObjectURL(blob);
-
-            // Create a temporary anchor element to trigger the download
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${clusterName}-kubeconfig.yaml`;
-
-            // Append to the document, click it, and clean up
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            // Release the blob URL
-            window.URL.revokeObjectURL(url);
-
+            saveAs(blob,`${clusterName}-kubeconfig.yaml`);
             setData(`Kubeconfig for ${clusterName} downloaded successfully!`);
         } catch (err) {
             setError(`Failed to download kubeconfig for ${clusterName}`);
@@ -160,95 +157,69 @@ export default function ClustersList() {
             fontFamily: "Arial, sans-serif",
         }}>
             <h1 style={{ color: "#333", marginBottom: "1rem", textAlign: "center" }}>Clusters</h1>
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            {data && <p style={{ color: "green" }}>{data}</p>}
+            {error && <Alert severity="error">{error}"</Alert>}
+            {data && <Alert severity="success">{data}</Alert>}
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
-                <button
+                <Button
                     onClick={fetchClusters}
-                    style={{
-                        padding: "0.5rem 1rem",
-                        backgroundColor: "#0078d4",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                    }}
+                    variant="contained"
                 >
                     Refresh
-                </button>
-
-
+                </Button>
                 <Link href="/cluster">
-                    <button style={{
-                        padding: "0.5rem 1rem",
-                        backgroundColor: "#28a745",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                    }}>
-                        Create New Cluster
-                    </button>
+                    <Button
+                        variant="contained"
+                        color={"success"}
+                    >
+                        Create a new cluster
+                    </Button>
                 </Link>
             </div>
-
-            {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
-
+            {error && <Alert severity="error">{error}"</Alert>}
             {loading ? (
-                <p style={{ textAlign: "center" }}>Loading clusters...</p>
+                <CircularProgress />
             ) : clusters.length === 0 ? (
-                <p style={{ textAlign: "center" }}>No clusters found</p>
+                <Alert severity="error">No clusters found</Alert>
             ) : (
                 <div style={{
                     border: "1px solid #ddd",
                     borderRadius: "5px",
                     overflow: "hidden"
                 }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                        <thead>
-                        <tr style={{ backgroundColor: "#f8f9fa" }}>
-                            <th style={{ padding: "12px 15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Cluster Name</th>
-                            <th style={{ padding: "12px 15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Status</th>
-                            <th style={{ padding: "12px 15px", textAlign: "center", borderBottom: "1px solid #ddd" }}>Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {clusters.map((cluster, index) => (
-                            <tr key={index} style={{ borderBottom: "1px solid #ddd" }}>
-                                <td style={{ padding: "12px 15px" }}>{cluster.name}</td>
-                                <td style={{ padding: "12px 15px" }}>{cluster.status}</td>
-                                <td style={{ padding: "12px 15px", textAlign: "center" }}>
-                                    <button
-                                        onClick={() => deleteCluster(cluster.name)}
-                                        style={{
-                                            padding: "5px 10px",
-                                            backgroundColor: "#dc3545",
-                                            color: "white",
-                                            border: "none",
-                                            borderRadius: "4px",
-                                            cursor: "pointer",
-                                        }}
-                                    >
-                                        Delete
-                                    </button>
-                                    <button
-                                        onClick={() => downloadKubeconfig(cluster.name)}
-                                        style={{
-                                            padding: "5px 10px",
-                                            backgroundColor: "#0078d4",
-                                            color: "white",
-                                            border: "none",
-                                            borderRadius: "4px",
-                                            cursor: "pointer",
-                                        }}
-                                    >
-                                        Kubeconfig
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
+                    <TableContainer>
+                        <Table >
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell style={{ color: "white" }}>Cluster Name </TableCell>
+                                    <TableCell style={{ color: "white" }} >Status</TableCell>
+                                    <TableCell style={{ color: "white" }} >Action</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {clusters.map((cluster, index) => (
+                                    <TableRow key={index} style={{ borderBottom: "1px solid #ddd" }}>
+                                        <TableCell style={{ color: "white" }}>{cluster.name}</TableCell>
+                                        <TableCell style={{ color: "white" }}>{cluster.status}</TableCell>
+                                        <TableCell style={{ color: "white" }}>
+                                            <Button
+                                                onClick={() => deleteCluster(cluster.name)}
+                                                color="error"
+                                                variant="contained"
+                                            >
+                                                Delete
+                                            </Button>
+                                            <Button
+                                                onClick={() => downloadKubeconfig(cluster.name)}
+                                                variant="contained"
+                                            >
+                                                Kubeconfig
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
                 </div>
             )}
         </main>

@@ -1,6 +1,7 @@
 "use client";
 
 import getUserManager from "@/app/auth-config";
+import { Button } from "@mui/material";
 
 export default function Login() {
         const handleLogin = async () => {
@@ -23,24 +24,9 @@ export default function Login() {
                 fontFamily: "Arial, sans-serif",
             }}
         >
-            <h2 style={{ marginBottom: "1rem" }}>Login with Microsoft</h2>
-            <button
-                onClick={handleLogin}
-                style={{
-                    padding: "0.5rem 1rem",
-                    fontSize: "1rem",
-                    cursor: "pointer",
-                    backgroundColor: "#0078D4",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "5px",
-                    transition: "background-color 0.3s",
-                }}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#005A9E")}
-                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#0078D4")}
-            >
-                Login
-            </button>
+            <Button variant="contained"
+                    onClick={handleLogin}
+            >Login with Microsoft</Button>
         </main>
     );
 }

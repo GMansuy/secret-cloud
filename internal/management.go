@@ -3,7 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
-	"log/slog"
+	"log"
 	"os"
 	"os/exec"
 
@@ -49,7 +49,7 @@ func (c *ClusterService) CreateCluster(ctx context.Context, clusterName string, 
 	if err != nil {
 		return fmt.Errorf("failed to apply cluster configuration to file: %w", err)
 	}
-	slog.InfoContext(ctx, "Creating Cluster", slog.String("clusterName", clusterName))
+	log.Printf("Creating Cluster: %s\n", clusterName)
 	return nil
 }
 
@@ -59,7 +59,7 @@ func (c *ClusterService) DeleteCluster(ctx context.Context, clusterName string) 
 	if err != nil {
 		return err
 	}
-	slog.InfoContext(ctx, "Deleting Cluster", slog.String("clusterName", clusterName))
+	log.Printf("Deleting Cluster: %s\n", clusterName)
 	return nil
 }
 
