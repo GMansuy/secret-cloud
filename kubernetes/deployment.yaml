@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: rocket-app
-        image: ${DOCKER_REGISTRY}/rocket-app:latest
+        image: rg.fr-par.scw.cloud/ammi-ns/rocket:1.0.1
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
@@ -27,15 +27,30 @@ spec:
           limits:
             cpu: "500m"
             memory: "512Mi"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        env:
+          - name: KUBERNETES_VERSION
+            value: "1.30.0"
+          - name: SCW_PROJECT_ID
+            value: "f4b6faa9-0dce-4b18-8f99-824118e7d857"
+          - name: SCW_REGION
+            value: "fr-par"
+          - name: SPECIAL_LEVEL_KEY
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: CLIENT_ID
+          - name: SPECIAL_TYPE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: azure-credentials
+                key: CLIENT_SECRET
+          - name: SCW_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: scwsm-secret
+                key: secret-access-key
+          - name: SCW_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: scwsm-secret
+                key: access-key

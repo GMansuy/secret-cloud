@@ -14,10 +14,14 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o rocket-app cmd/ma
 FROM alpine:latest
 
 # Add certificates and timezone data
-RUN apk --no-cache add ca-certificates tzdata
+RUN apk --no-cache add ca-certificates tzdata curl
 
 # Create non-root user
 RUN adduser -D -g '' appuser
+
+RUN curl -sLO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" \
+    && install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \
+    && rm kubectl
 
 WORKDIR /app
 
