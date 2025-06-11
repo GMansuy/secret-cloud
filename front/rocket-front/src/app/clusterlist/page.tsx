@@ -15,6 +15,7 @@ import {
     TableRow
 } from "@mui/material";
 import { saveAs } from 'file-saver';
+import {border} from "@mui/system";
 
 interface ClusterData {
     name: string;
@@ -46,9 +47,6 @@ export default function ClustersList() {
             const clusterData = parseClustersData(response.data.clusters);
             setClusters(clusterData);
             setError("");
-
-            console.log("api clusters:", response.data.clusters);
-            console.log( "Fetched clusters:", clusterData);
         } catch (err) {
             setError("Failed to fetch clusters");
             console.error(err);
@@ -181,26 +179,21 @@ export default function ClustersList() {
             ) : clusters.length === 0 ? (
                 <Alert severity="error">No clusters found</Alert>
             ) : (
-                <div style={{
-                    border: "1px solid #ddd",
-                    borderRadius: "5px",
-                    overflow: "hidden"
-                }}>
-                    <TableContainer>
+                    <TableContainer style={{border: "1px solid #CCC", borderRadius: "4px", overflow: "hidden"}}>
                         <Table >
                             <TableHead>
                                 <TableRow>
-                                    <TableCell style={{ color: "white" }}>Cluster Name </TableCell>
-                                    <TableCell style={{ color: "white" }} >Status</TableCell>
-                                    <TableCell style={{ color: "white" }} >Action</TableCell>
+                                    <TableCell >Cluster Name </TableCell>
+                                    <TableCell  >Status</TableCell>
+                                    <TableCell  >Action</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {clusters.map((cluster, index) => (
                                     <TableRow key={index} style={{ borderBottom: "1px solid #ddd" }}>
-                                        <TableCell style={{ color: "white" }}>{cluster.name}</TableCell>
-                                        <TableCell style={{ color: "white" }}>{cluster.status}</TableCell>
-                                        <TableCell style={{ color: "white" }}>
+                                        <TableCell >{cluster.name}</TableCell>
+                                        <TableCell >{cluster.status}</TableCell>
+                                        <TableCell >
                                             <Button
                                                 onClick={() => deleteCluster(cluster.name)}
                                                 color="error"
@@ -220,7 +213,6 @@ export default function ClustersList() {
                             </TableBody>
                         </Table>
                     </TableContainer>
-                </div>
             )}
         </main>
     );
