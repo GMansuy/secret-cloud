@@ -20,6 +20,7 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
+        - containerPort: 8443
         resources:
           requests:
             cpu: "100m"
@@ -54,3 +55,13 @@ spec:
               secretKeyRef:
                 name: scwsm-secret
                 key: access-key
+          - name: TLS_CERT_CONTENT
+            valueFrom:
+              secretKeyRef:
+                name: azure-ocho-ninja-tls
+                key: tls.crt
+          - name: TLS_KEY_CONTENT
+            valueFrom:
+              secretKeyRef:
+                name: azure-ocho-ninja-tls
+                key: tls.key

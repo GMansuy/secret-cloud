@@ -29,4 +29,4 @@ spec:
             memory: "512Mi"
         env:
           - name: NEXT_PUBLIC_BACKEND_URL
-            value: "rocket-app:80"
+            value: "https://rocket-app:443"

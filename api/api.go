@@ -55,7 +55,7 @@ func (a *App) setupRoutes() {
 }
 
 func (a *App) homeHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Welcome to the Clusterapi server HTTP server!"))
+	w.Write([]byte("Welcome to the Clusterapi server HTTPS/HTTP server!"))
 }
 
 func (a *App) createClusterHandler(w http.ResponseWriter, r *http.Request) {
