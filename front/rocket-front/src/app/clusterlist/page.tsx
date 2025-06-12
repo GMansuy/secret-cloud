@@ -33,6 +33,7 @@ export default function ClustersList() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>("");
     const [data, setData] = useState<string>("");
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL
 
     useEffect(() => {
         fetchClusters();
@@ -41,7 +42,7 @@ export default function ClustersList() {
     const fetchClusters = async () => {
         setLoading(true);
         try {
-            const response = await axios.get("http://localhost:8080/list");
+            const response = await axios.get(`https://${backendUrl}/list`);
 
             // Parse the response data - this depends on the actual format returned by your API
             const clusterData = parseClustersData(response.data.clusters);
@@ -123,7 +124,7 @@ export default function ClustersList() {
     const deleteCluster = async (clusterName: string) => {
         setData("");
         try {
-            await axios.delete("http://localhost:8080/cluster", {
+            await axios.delete(`https://${backendUrl}/cluster`, {
                 data: { name: clusterName }
             });
             await fetchClusters(); // Refresh the list
@@ -135,7 +136,7 @@ export default function ClustersList() {
     };
     const downloadKubeconfig = async (clusterName: string) => {
         try {
-            const response = await axios.get(`http://localhost:8080/cluster/${clusterName}/kubeconfig`);
+            const response = await axios.get(`https://${backendUrl}/cluster/${clusterName}/kubeconfig`);
 
             // Create a blob with the kubeconfig content
             const blob = new Blob([response.data.kubeconfig], { type: 'text/yaml' });

@@ -9,6 +9,7 @@ import (
 	"os/exec"
 
 	b64 "encoding/base64"
+
 	"github.com/Tomy2e/cluster-api-provider-scaleway/internal"
 	"github.com/Tomy2e/cluster-api-provider-scaleway/internal/scope"
 	"github.com/go-chi/chi"

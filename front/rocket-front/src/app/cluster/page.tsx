@@ -17,6 +17,8 @@ export default function Cluster() {
         workerMachineCount: 1,
     });
     const router = useRouter();
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL
+
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -32,7 +34,7 @@ export default function Cluster() {
         setError("");
         setData("");
         try {
-            const response = await axios.post("http://localhost:8080/cluster", formData);
+            const response = await axios.post(`https://${backendUrl}/cluster`, formData);
             setData("Cluster created successfully!");
             router.push("/clusterlist");
         } catch (err) {

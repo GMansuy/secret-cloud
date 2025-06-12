@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rocket-front
+  labels:
+    app: rocket-front
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rocket-front
+  template:
+    metadata:
+      labels:
+        app: rocket-front
+    spec:
+      containers:
+      - name: rocket-front
+        image: rg.fr-par.scw.cloud/ammi-ns/rocket-front:1.0.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        env:
+          - name: NEXT_PUBLIC_BACKEND_URL
+            value: "rocket-app:80"

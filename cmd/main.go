@@ -46,7 +46,11 @@ func main() {
 	}
 
 	kubeconfigPath := internal.GetKubeconfig()
-	log.Printf("Using kubeconfig: %s", kubeconfigPath)
+	err := os.Setenv("KUBECONFIG", kubeconfigPath)
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Setting kubeconfig: %s", kubeconfigPath)
 	clusterSvc := internal.NewClusterService(kubeconfigPath, templateOptions)
 	app := api.NewApp(clusterSvc)
 	server := &http.Server{
