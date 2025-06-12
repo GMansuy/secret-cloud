@@ -28,9 +28,6 @@ WORKDIR /app
 # Copy binary from build stage
 COPY --from=builder /app/rocket-app .
 
-# Use non-root user
-USER appuser
-
 # Expose the API port
 EXPOSE 8080
 
