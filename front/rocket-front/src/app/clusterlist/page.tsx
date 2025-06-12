@@ -34,6 +34,9 @@ export default function ClustersList() {
     const [error, setError] = useState<string>("");
     const [data, setData] = useState<string>("");
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL
+    if (!backendUrl) {
+        console.error('NEXT_PUBLIC_BACKEND_URL is undefined. Check your .env.local config.');
+    }
 
     useEffect(() => {
         fetchClusters();

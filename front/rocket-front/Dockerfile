@@ -1,7 +1,9 @@
 FROM node:18-alpine AS builder
+ENV NEXT_PUBLIC_BACKEND_URL="rocket-app:80"
 WORKDIR /app
 COPY . .
 RUN npm install && npm run build
+
 
 FROM nginx:alpine
 # Remove default nginx static assets
