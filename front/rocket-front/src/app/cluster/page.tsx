@@ -7,6 +7,13 @@ import {Button, CircularProgress, Stack, TextField} from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import Link from "next/link";
 
+// Helper function to get the full URL with appropriate protocol
+const getFullUrl = (baseUrl: string | undefined, path: string): string => {
+    if (!baseUrl) return path;
+    const protocol = baseUrl.startsWith('https') ? '' : 'http://';
+    return `${protocol}${baseUrl}${path}`;
+};
+
 export default function Cluster() {
     const [data, setData] = useState<string>("");
     const [error, setError] = useState<string>("");
@@ -34,7 +41,7 @@ export default function Cluster() {
         setError("");
         setData("");
         try {
-            const response = await axios.post(`https://${backendUrl}/cluster`, formData);
+            const response = await axios.post(getFullUrl(backendUrl, '/cluster'), formData);
             setData("Cluster created successfully!");
             router.push("/clusterlist");
         } catch (err) {

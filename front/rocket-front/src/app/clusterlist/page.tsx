@@ -17,6 +17,13 @@ import {
 import { saveAs } from 'file-saver';
 import {border} from "@mui/system";
 
+// Helper function to get the full URL with appropriate protocol
+const getFullUrl = (baseUrl: string | undefined, path: string): string => {
+    if (!baseUrl) return path;
+    const protocol = baseUrl.startsWith('http') ? '' : 'https://';
+    return `${protocol}${baseUrl}${path}`;
+};
+
 interface ClusterData {
     name: string;
     status: string;
@@ -45,7 +52,7 @@ export default function ClustersList() {
     const fetchClusters = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`https://${backendUrl}/list`);
+            const response = await axios.get(getFullUrl(backendUrl, '/list'));
 
             // Parse the response data - this depends on the actual format returned by your API
             const clusterData = parseClustersData(response.data.clusters);
@@ -127,7 +134,7 @@ export default function ClustersList() {
     const deleteCluster = async (clusterName: string) => {
         setData("");
         try {
-            await axios.delete(`https://${backendUrl}/cluster`, {
+            await axios.delete(getFullUrl(backendUrl, '/cluster'), {
                 data: { name: clusterName }
             });
             await fetchClusters(); // Refresh the list
@@ -139,7 +146,7 @@ export default function ClustersList() {
     };
     const downloadKubeconfig = async (clusterName: string) => {
         try {
-            const response = await axios.get(`https://${backendUrl}/cluster/${clusterName}/kubeconfig`);
+            const response = await axios.get(getFullUrl(backendUrl, `/cluster/${clusterName}/kubeconfig`));
 
             // Create a blob with the kubeconfig content
             const blob = new Blob([response.data.kubeconfig], { type: 'text/yaml' });
