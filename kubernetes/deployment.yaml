@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: rocket-app
-        image: rg.fr-par.scw.cloud/ammi-ns/rocket:1.0.3
+        image: rg.fr-par.scw.cloud/ammi-ns/rocket:1.0.4
         imagePullPolicy: Always
         ports:
         - containerPort: 8080

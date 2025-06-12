@@ -37,7 +37,11 @@ func (a *App) setupRoutes() {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+			// Add security headers for HTTPS
+			w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 			if r.Method == http.MethodOptions {
 				w.WriteHeader(http.StatusOK)
 				return
@@ -55,7 +59,7 @@ func (a *App) setupRoutes() {
 }
 
 func (a *App) homeHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Welcome to the Clusterapi server HTTPS/HTTP server!"))
+	w.Write([]byte("Welcome to the Clusterapi server HTTP server!"))
 }
 
 func (a *App) createClusterHandler(w http.ResponseWriter, r *http.Request) {
