@@ -5,6 +5,10 @@ resources:
   - deployment.yaml
   - service.yaml
   - ingress.yaml
+  - ingress-controller.yaml
+  - cert-manager.yaml
+  - cluster-issuer.yaml
+  - certificate.yaml
 
 # Uncomment and modify this section if you need to set image tags dynamically
 # images:

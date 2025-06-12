@@ -5,15 +5,22 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://your-frontend-domain"
 spec:
+  tls:
+    - hosts:
+        - rocket-app.azure.ocho.ninja
+      secretName: azure-ocho-ninja-tls
   rules:
-  - host: rocket-app.example.com  # Replace with your actual domain
+  - host: rocket-app.azure.ocho.ninja
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: rocket-app
+            name: rocket-front
             port:
               number: 80
