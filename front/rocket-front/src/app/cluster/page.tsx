@@ -10,7 +10,7 @@ import Link from "next/link";
 // Helper function to get the full URL with appropriate protocol
 const getFullUrl = (baseUrl: string | undefined, path: string): string => {
     if (!baseUrl) return path;
-    const protocol = baseUrl.startsWith('https') ? '' : 'http://';
+    const protocol = baseUrl.startsWith('http') ? '' : 'https://';
     return `${protocol}${baseUrl}${path}`;
 };
 
