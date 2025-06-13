@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - ingress-controller.yaml
+  - cert-manager.yaml
+  - cluster-issuer.yaml
+  - certificate.yaml
+
+# Uncomment and modify this section if you need to set image tags dynamically
+# images:
+# - name: ${DOCKER_REGISTRY}/rocket-app
+#   newName: your-registry/rocket-app
+#   newTag: latest
+
+# Uncomment and modify this section if you need to add environment-specific configurations
+# configMapGenerator:
+# - name: rocket-app-config
+#   literals:
+#   - ENV_VAR_1=value1
+#   - ENV_VAR_2=value2

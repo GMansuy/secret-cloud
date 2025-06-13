@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
@@ -45,17 +46,50 @@ func main() {
 		}
 	}
 
-	clusterSvc := internal.NewClusterService(os.Getenv("KUBECONFIG"), templateOptions)
+	kubeconfigPath := internal.GetKubeconfig()
+	err := os.Setenv("KUBECONFIG", kubeconfigPath)
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("Setting kubeconfig: %s", kubeconfigPath)
+	clusterSvc := internal.NewClusterService(kubeconfigPath, templateOptions)
 	app := api.NewApp(clusterSvc)
+	// Get TLS certificate and key from environment variables
+	certContent := os.Getenv("TLS_CERT_CONTENT")
+	keyContent := os.Getenv("TLS_KEY_CONTENT")
+
 	server := &http.Server{
-		Addr:    ":8080",
+		Addr:    ":8443", // Changed to standard HTTPS port
 		Handler: app.Router,
 	}
 
 	go func() {
-		log.Println("Starting server on :8080...")
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Could not listen on :8080: %v\n", err)
+		if certContent != "" && keyContent != "" {
+			// Use certificate and key from environment variables
+			cert, err := tls.X509KeyPair([]byte(certContent), []byte(keyContent))
+			if err != nil {
+				log.Printf("Error loading TLS certificate from environment variables: %v", err)
+				log.Println("Falling back to HTTP server on :8080...")
+				server.Addr = ":8080"
+				if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+					log.Fatalf("Could not listen on :8080: %v\n", err)
+				}
+				return
+			}
+
+			server.TLSConfig = &tls.Config{
+				Certificates: []tls.Certificate{cert},
+			}
+			log.Println("Starting HTTPS server on :8443 with TLS certificate from environment variables")
+			if err := server.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("Could not listen on :8443: %v\n", err)
+			}
+		} else {
+			log.Println("TLS certificate or key not found, starting HTTP server on :8080...")
+			server.Addr = ":8080" // Fallback to HTTP port
+			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("Could not listen on :8080: %v\n", err)
+			}
 		}
 	}()
 

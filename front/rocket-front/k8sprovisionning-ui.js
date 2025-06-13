@@ -15,11 +15,11 @@ export default function ClusterDashboard() {
     const [workerNodes, setWorkerNodes] = useState(2);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
     const fetchClusters = async () => {
         try {
-            const res = await axios.get('${API_BASE_URL}/clusters');
+            const res = await axios.get(`${API_BASE_URL}/clusters`);
             setClusters(res.data);
         } catch (err) {
             console.error('Failed to fetch clusters', err);
@@ -34,7 +34,7 @@ export default function ClusterDashboard() {
         setLoading(true);
         setError('');
         try {
-            await axios.post('${API_BASE_URL}/clusters', { name, controlPlaneNodes, workerNodes });
+            await axios.post(`${API_BASE_URL}/clusters`, { name, controlPlaneNodes, workerNodes });
             await fetchClusters();
             setName('');
         } catch (err) {

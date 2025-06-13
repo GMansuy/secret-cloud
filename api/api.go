@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os/exec"
 
 	b64 "encoding/base64"
+
 	"github.com/Tomy2e/cluster-api-provider-scaleway/internal"
 	"github.com/Tomy2e/cluster-api-provider-scaleway/internal/scope"
 	"github.com/go-chi/chi"
@@ -35,7 +37,11 @@ func (a *App) setupRoutes() {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", "*") // Allow all origins
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+			// Add security headers for HTTPS
+			w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 			if r.Method == http.MethodOptions {
 				w.WriteHeader(http.StatusOK)
 				return
@@ -59,6 +65,7 @@ func (a *App) homeHandler(w http.ResponseWriter, r *http.Request) {
 func (a *App) createClusterHandler(w http.ResponseWriter, r *http.Request) {
 	var cluster scope.Cluster
 	if err := json.NewDecoder(r.Body).Decode(&cluster); err != nil {
+		log.Printf("Error decoding JSON in createClusterHandler: %v", err)
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
@@ -68,6 +75,7 @@ func (a *App) createClusterHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := a.ClusterSvc.CreateCluster(context.Background(), cluster.Name, opts)
 	if err != nil {
+		log.Printf("Error creating cluster %s: %v", cluster.Name, err)
 		http.Error(w, fmt.Sprintf("Failed to generate cluster config: %v", err), http.StatusInternalServerError)
 		return
 	}
@@ -83,6 +91,7 @@ func (a *App) createClusterHandler(w http.ResponseWriter, r *http.Request) {
 func (a *App) deleteClusterHandler(w http.ResponseWriter, r *http.Request) {
 	var cluster scope.Cluster
 	if err := json.NewDecoder(r.Body).Decode(&cluster); err != nil {
+		log.Printf("Error decoding JSON in deleteClusterHandler: %v", err)
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
@@ -90,6 +99,7 @@ func (a *App) deleteClusterHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := a.ClusterSvc.DeleteCluster(context.Background(), cluster.Name)
 	if err != nil {
+		log.Printf("Error deleting cluster %s: %v", cluster.Name, err)
 		http.Error(w, fmt.Sprintf("Failed to generate cluster config: %v", err), http.StatusInternalServerError)
 		return
 	}
@@ -106,6 +116,7 @@ func (a *App) listClusters(w http.ResponseWriter, r *http.Request) {
 	cmd := exec.Command("kubectl", "get", "cluster", `-o=jsonpath='{range .items[*]}{.metadata.name}{.status.conditions}{end}`)
 	ouput, err := cmd.CombinedOutput()
 	if err != nil {
+		log.Printf("Error listing clusters: %v", err)
 		http.Error(w, fmt.Sprintf("Failed to list clusters: %v", err), http.StatusInternalServerError)
 		return
 	}
@@ -124,6 +135,7 @@ func (a *App) getCluster(w http.ResponseWriter, r *http.Request) {
 	cmd := exec.Command("kubectl", "get", "cluster", clusterName, `-o=jsonpath={.status.conditions}`)
 	ouput, err := cmd.CombinedOutput()
 	if err != nil {
+		log.Printf("Error getting cluster %s: %v", clusterName, err)
 		http.Error(w, fmt.Sprintf("Failed to list clusters: %v", err), http.StatusInternalServerError)
 		return
 	}
@@ -140,6 +152,7 @@ func (a *App) getClusterKubeconfigHandler(w http.ResponseWriter, r *http.Request
 	clusterName := chi.URLParam(r, "name")
 
 	if clusterName == "" {
+		log.Printf("Error: Empty cluster name in getClusterKubeconfigHandler")
 		http.Error(w, "Cluster name is required", http.StatusBadRequest)
 		return
 	}
@@ -150,6 +163,7 @@ func (a *App) getClusterKubeconfigHandler(w http.ResponseWriter, r *http.Request
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
+		log.Printf("Error getting kubeconfig for cluster %s: %v", clusterName, err)
 		http.Error(w, fmt.Sprintf("Failed to get kubeconfig: %v", err), http.StatusInternalServerError)
 		return
 	}
