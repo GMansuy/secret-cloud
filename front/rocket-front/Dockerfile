@@ -1,5 +1,5 @@
 FROM node:18-alpine AS builder
-ENV NEXT_PUBLIC_BACKEND_URL="rocket-app:80"
+ENV NEXT_PUBLIC_BACKEND_URL="rocket-app:443"
 WORKDIR /app
 COPY . .
 RUN npm install && npm run build
